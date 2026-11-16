@@ -5,52 +5,19 @@ A minimal [Next.js](https://nextjs.org) (App Router) project with the [BlockNote
 ## Requirements
 
 - Node.js 20.9 or newer
-- A free [Supabase](https://supabase.com) project
 
 ## Setup
-
-### 1. Clone and install
 
 ```bash
 git clone https://github.com/cederdorff/nextjs-blocknote.git
 cd nextjs-blocknote
-git switch supabase-notes
 npm install
-```
-
-### 2. Add your Supabase keys
-
-In the Supabase dashboard, click **Connect** at the top of your project (or go to **Project Settings → API Keys**) and copy the **Project URL** and the **publishable key**.
-
-Create a file called `.env.local` in the project root:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-```
-
-`.env.local` is ignored by Git, so your keys are never committed. Never put the `secret` / `service_role` key in a `NEXT_PUBLIC_` variable, because those values are sent to the browser.
-
-### 3. Create the `notes` table
-
-Open **SQL Editor** in the Supabase dashboard, paste the contents of [`supabase/migrations/20261116120000_create_notes.sql`](supabase/migrations/20261116120000_create_notes.sql) and click **Run**.
-
-This creates the `notes` table with Row Level Security (RLS), so each user can only read and change their own notes.
-
-### 4. Configure authentication
-
-Go to **Authentication → Sign In / Providers → Email**:
-
-- **Confirm email** is on by default. New users must click a link in their email before they can log in. Turn it off for faster local testing.
-- If you keep it on, set **Authentication → URL Configuration → Site URL** to `http://localhost:3000`, so the confirmation link points to your local app.
-
-### 5. Start the app
-
-```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). You are redirected to `/login`.
+Open [http://localhost:3000](http://localhost:3000).
+
+No environment variables or backend are needed.
 
 ## Testing
 
@@ -63,14 +30,14 @@ npm run build   # production build, catches build and rendering errors
 
 ### Manual test
 
-1. **Sign up:** go to `/login`, enter an email and a password (min. 6 characters) and click **Sign up**. You land on **My notes** (or see "Check your email" if email confirmation is on).
-2. **Create a note:** click **New note**. You are taken to `/notes/<id>`.
-3. **Auto-save:** change the title and write in the editor. The status changes from "Unsaved changes" → "Saving…" → "Saved" about 1 second after you stop typing.
-4. **Persistence:** reload the page. The title and content are still there. In the Supabase dashboard, **Table Editor → notes** shows the row, with the editor content as JSON in `content`.
-5. **List:** go back to **All notes**. The note is listed, newest first.
-6. **Delete:** open the note, click **Delete** and confirm. You are taken back to the list, and the note is gone.
-7. **Log out:** click **Log out**. Visiting `/` now redirects you to `/login`.
-8. **Row Level Security:** sign up as a second user. The list is empty, and opening the first user's note URL (`/notes/<id>`) shows a 404.
+1. **Editor loads:** open [http://localhost:3000](http://localhost:3000). The heading and an empty editor are shown, with no errors in the browser console.
+2. **Typing:** click in the editor and write some text.
+3. **Slash menu:** type `/` and pick a block type, e.g. **Heading 1** or **Bullet List**.
+4. **Formatting:** select text. The formatting toolbar appears, and **Bold**/**Italic** work.
+5. **Drag handle:** hover a block, and use the `⋮⋮` handle to drag it to a new position.
+6. **No server rendering:** reload the page. The editor appears after the page loads, without hydration errors in the console.
+
+Content is not saved. It disappears when you reload, which is expected on this branch.
 
 ## How it works
 
