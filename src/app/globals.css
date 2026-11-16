@@ -1,117 +1,149 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
+  --muted: #666666;
+  --border: #e5e5e5;
+  --surface: #fafafa;
+  --accent: #2f54eb;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --muted: #a1a1a1;
+    --border: #2e2e2e;
+    --surface: #141414;
+    --accent: #85a5ff;
+  }
+
+  html {
+    color-scheme: dark;
   }
 }
 
-*,
-*::before,
-*::after {
+* {
   box-sizing: border-box;
-}
-
-html,
-body {
   margin: 0;
-  min-height: 100%;
+  padding: 0;
 }
 
 body {
-  background: var(--background);
+  min-height: 100vh;
   color: var(--foreground);
-  font-family: var(--font-sans);
+  background: var(--background);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
 main {
-  max-width: 48rem;
+  max-width: 64rem;
   margin: 0 auto;
-  padding: 4rem 1rem;
+  padding: 3rem 1.5rem;
 }
 
-/* Layout helpers */
-.stack {
-  display: grid;
-  gap: 1rem;
+h1 {
+  font-size: 2.25rem;
+  line-height: 1.2;
+  margin-bottom: 1rem;
 }
 
-.row {
+a {
+  color: var(--accent);
+}
+
+/* The forms for sign up, log in and log out */
+.auth-form {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
-  align-items: center;
+  max-width: 24rem;
+  margin: 1.5rem 0;
 }
 
-.spread {
-  justify-content: space-between;
-}
-
-/* Forms */
-label {
-  display: grid;
-  gap: 0.25rem;
-}
-
-input,
-button {
-  font: inherit;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-  border: 1px solid color-mix(in srgb, var(--foreground) 25%, transparent);
-  background: var(--background);
+.auth-form input {
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
   color: var(--foreground);
+  font: inherit;
 }
 
-button {
+.auth-form input::placeholder {
+  color: var(--muted);
+}
+
+.auth-form button {
+  padding: 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--accent);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
   cursor: pointer;
-  background: var(--foreground);
-  color: var(--background);
 }
 
-button.secondary {
+.form-error {
+  margin-bottom: 1rem;
+  color: #d4380d;
+}
+
+/* Buttons */
+.button {
+  padding: 0.5rem 1rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--accent);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button.secondary {
+  border: 1px solid var(--border);
   background: transparent;
   color: var(--foreground);
 }
 
-button:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-input.title {
-  font-size: 2rem;
-  font-weight: 700;
-  border: none;
-  padding: 0;
-}
-
-/* Notes list */
+/* The list of notes on the home page */
 .notes {
   list-style: none;
-  padding: 0;
-  display: grid;
-  gap: 0.5rem;
+  margin-top: 1.5rem;
 }
 
 .notes li {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
 }
 
-.muted,
-.notes time {
-  color: color-mix(in srgb, var(--foreground) 60%, transparent);
+.notes span {
+  color: var(--muted);
   font-size: 0.875rem;
 }
 
-.error {
-  color: #dc2626;
+/* One note */
+.note-title {
+  width: 100%;
+  margin: 1.5rem 0 1rem;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 2.25rem;
+  font-weight: 700;
+}
+
+.note-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 1.5rem;
 }

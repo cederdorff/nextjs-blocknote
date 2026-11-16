@@ -1,22 +1,19 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { notFound, redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import NoteEditor from "@/components/NoteEditor";
 
-export default function NotePage({ params }) {
-  return (
-    <main>
-      <Link href="/">← All notes</Link>
-      <Suspense fallback={<p>Loading note…</p>}>
-        <Note params={params} />
-      </Suspense>
-    </main>
-  );
-}
+export default async function NotePage({ params }) {
+  const user = await getCurrentUser();
 
-async function Note({ params }) {
+  if (!user) {
+    redirect("/login");
+  }
+
+  // The id comes from the URL: /notes/[id]
   const { id } = await params;
+
   const supabase = await createClient();
   const { data: note } = await supabase
     .from("notes")
@@ -24,8 +21,17 @@ async function Note({ params }) {
     .eq("id", id)
     .maybeSingle();
 
-  // Also covers invalid ids and other users' notes (blocked by RLS).
-  if (!note) notFound();
+  // No note: the id doesn't exist, or it belongs to another user (RLS)
+  if (!note) {
+    notFound();
+  }
 
-  return <NoteEditor note={note} />;
+  return (
+    <main>
+      <p>
+        <Link href="/">← All notes</Link>
+      </p>
+      <NoteEditor note={note} />
+    </main>
+  );
 }

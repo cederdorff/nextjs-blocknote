@@ -1,50 +1,44 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
+import { createNote } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/server";
-import { logout } from "./login/actions";
-import { createNote } from "./notes/actions";
 
-export default function Home() {
-  return (
-    <main>
-      <header className="row spread">
-        <h1>My notes</h1>
-        <form action={logout}>
-          <button className="secondary">Log out</button>
-        </form>
-      </header>
+export default async function Home() {
+  // Only logged-in users can see their notes
+  const user = await getCurrentUser();
 
-      <form action={createNote}>
-        <button>New note</button>
-      </form>
+  if (!user) {
+    redirect("/login");
+  }
 
-      <Suspense fallback={<p>Loading notes…</p>}>
-        <NotesList />
-      </Suspense>
-    </main>
-  );
-}
-
-async function NotesList() {
+  // RLS filters the rows, so we only get this user's notes
   const supabase = await createClient();
-  const { data: notes, error } = await supabase
+  const { data: notes } = await supabase
     .from("notes")
     .select("id, title, updated_at")
     .order("updated_at", { ascending: false });
 
-  if (error) return <p role="alert" className="error">{error.message}</p>;
-  if (notes.length === 0) return <p>No notes yet.</p>;
-
   return (
-    <ul className="notes">
-      {notes.map((note) => (
-        <li key={note.id}>
-          <Link href={`/notes/${note.id}`}>{note.title}</Link>
-          <time dateTime={note.updated_at}>
-            {new Date(note.updated_at).toLocaleString("da-DK")}
-          </time>
-        </li>
-      ))}
-    </ul>
+    <main>
+      <h1>My notes</h1>
+
+      <form action={createNote}>
+        <button type="submit" className="button">
+          New note
+        </button>
+      </form>
+
+      {notes.length === 0 && <p>No notes yet. Create your first one!</p>}
+
+      <ul className="notes">
+        {notes.map((note) => (
+          <li key={note.id}>
+            <Link href={`/notes/${note.id}`}>{note.title}</Link>
+            <span>{new Date(note.updated_at).toLocaleString("da-DK")}</span>
+          </li>
+        ))}
+      </ul>
+    </main>
   );
 }
