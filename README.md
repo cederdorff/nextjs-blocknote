@@ -1,15 +1,20 @@
-# Next.js + BlockNote
+# Next.js + BlockNote + Supabase
 
-A minimal [Next.js](https://nextjs.org) (App Router) project with the [BlockNote](https://www.blocknotejs.org) block-based rich text editor, following the official [BlockNote Next.js guide](https://www.blocknotejs.org/docs/getting-started/nextjs).
+A small notes app: you sign up, log in and write notes in the [BlockNote](https://www.blocknotejs.org) editor. Each note is saved in [Supabase](https://supabase.com), and only you can see your own notes.
+
+This branch builds on two things:
+
+- [`main`](https://github.com/cederdorff/nextjs-blocknote/tree/main): BlockNote in Next.js, without a backend.
+- [`nextjs-supabase-auth`](https://github.com/cederdorff/nextjs-supabase-auth): sign up, log in and log out with Supabase Auth. The auth code here is the same.
 
 ## Requirements
 
 - Node.js 20.9 or newer
-- A free [Supabase](https://supabase.com) project
+- A free Supabase account
 
 ## Setup
 
-### 1. Clone and install
+### 1. Get the code
 
 ```bash
 git clone https://github.com/cederdorff/nextjs-blocknote.git
@@ -18,39 +23,53 @@ git switch supabase-notes
 npm install
 ```
 
-### 2. Add your Supabase keys
+### 2. Create a Supabase project
 
-In the Supabase dashboard, click **Connect** at the top of your project (or go to **Project Settings → API Keys**) and copy the **Project URL** and the **publishable key**.
+Go to [supabase.com/dashboard](https://supabase.com/dashboard), click **New project**, and give it a name and a database password.
 
-Create a file called `.env.local` in the project root:
+### 3. Add your keys to `.env.local`
+
+In your Supabase project, click **Connect** at the top (or go to **Project Settings → API Keys**). Copy the **Project URL** and the **publishable key**.
+
+Create a file called `.env.local` in the root of the project, next to `package.json`:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
-`.env.local` is ignored by Git, so your keys are never committed. Never put the `secret` / `service_role` key in a `NEXT_PUBLIC_` variable, because those values are sent to the browser.
+- `.env.local` is ignored by Git, so your keys stay on your computer.
+- Variables that start with `NEXT_PUBLIC_` are sent to the browser. The publishable key is made for that. Never put the **secret** key in a `NEXT_PUBLIC_` variable.
 
-### 3. Create the `notes` table
+### 4. Create the `notes` table
 
-Open **SQL Editor** in the Supabase dashboard, paste the contents of [`supabase/migrations/20261116120000_create_notes.sql`](supabase/migrations/20261116120000_create_notes.sql) and click **Run**.
+In Supabase, open **SQL Editor**, paste everything from [`supabase/migrations/20261116120000_create_notes.sql`](supabase/migrations/20261116120000_create_notes.sql) and click **Run**.
 
-This creates the `notes` table with Row Level Security (RLS), so each user can only read and change their own notes.
+The SQL creates:
 
-### 4. Configure authentication
+| Column | Type | What it is |
+|---|---|---|
+| `id` | `uuid` | The note's id. Created by the database. |
+| `user_id` | `uuid` | The user who owns the note. Set automatically to the logged-in user (`auth.uid()`). |
+| `title` | `text` | The title. |
+| `content` | `jsonb` | The BlockNote document: an array of blocks, saved as JSON. |
+| `created_at`, `updated_at` | `timestamptz` | When the note was created and last saved. |
 
-Go to **Authentication → Sign In / Providers → Email**:
+It also turns on **Row Level Security (RLS)** and adds policies, so a user can only read, create, change and delete rows where `user_id` is their own id. The check happens in the database, so it works no matter what the app sends.
 
-- **Confirm email** is on by default. New users must click a link in their email before they can log in. Turn it off for faster local testing.
-- If you keep it on, set **Authentication → URL Configuration → Site URL** to `http://localhost:3000`, so the confirmation link points to your local app.
+### 5. Turn off email confirmation (for local testing)
 
-### 5. Start the app
+Go to **Authentication → Sign In / Providers → Email** and turn off **Confirm email**.
+
+When it is on, new users must click a link in an email before they can log in. That is a good idea in a real app, but it slows you down while you are testing.
+
+### 6. Start the app
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). You are redirected to `/login`.
+Open [http://localhost:3000](http://localhost:3000). You are not logged in, so you are sent to `/login`.
 
 ## Testing
 
@@ -58,38 +77,71 @@ Open [http://localhost:3000](http://localhost:3000). You are redirected to `/log
 
 ```bash
 npm run lint    # ESLint
-npm run build   # production build, catches build and rendering errors
+npm run build   # production build, catches build errors
 ```
 
-### Manual test
+### Try it yourself
 
-1. **Sign up:** go to `/login`, enter an email and a password (min. 6 characters) and click **Sign up**. You land on **My notes** (or see "Check your email" if email confirmation is on).
+1. **Sign up:** go to `/signup`, enter an email and a password (at least 6 characters). You land on **My notes**, and your email is shown in the header.
 2. **Create a note:** click **New note**. You are taken to `/notes/<id>`.
-3. **Auto-save:** change the title and write in the editor. The status changes from "Unsaved changes" → "Saving…" → "Saved" about 1 second after you stop typing.
-4. **Persistence:** reload the page. The title and content are still there. In the Supabase dashboard, **Table Editor → notes** shows the row, with the editor content as JSON in `content`.
-5. **List:** go back to **All notes**. The note is listed, newest first.
-6. **Delete:** open the note, click **Delete** and confirm. You are taken back to the list, and the note is gone.
-7. **Log out:** click **Log out**. Visiting `/` now redirects you to `/login`.
-8. **Row Level Security:** sign up as a second user. The list is empty, and opening the first user's note URL (`/notes/<id>`) shows a 404.
+3. **Write and save:** change the title, write in the editor (try typing `/` for headings and lists) and click **Save**.
+4. **Reload:** reload the page. The title and the content are still there.
+5. **See the data:** in Supabase, open **Table Editor → notes**. Your note is there, and `content` holds the blocks as JSON.
+6. **Delete:** click **Delete** and confirm. You are back on the list, and the note is gone.
+7. **Log out:** click **Log out** in the header. Going to `/` now sends you to `/login`.
+8. **RLS:** sign up as a second user. The list is empty. Paste the URL of the first user's note: you get "Page not found", because the database doesn't return the row.
 
 ## How it works
 
-BlockNote only runs in the browser, so the editor is split into two files:
+### Files
 
-| File | Purpose |
+**Auth** (the same as in `nextjs-supabase-auth`)
+
+| File | What it does |
 |---|---|
-| [`src/components/Editor.js`](src/components/Editor.js) | Creates the editor with `useCreateBlockNote` and renders it with `BlockNoteView`. |
-| [`src/components/DynamicEditor.js`](src/components/DynamicEditor.js) | Loads `Editor` with `next/dynamic` and `ssr: false`, so it is never rendered on the server. |
-| [`src/components/NoteEditor.js`](src/components/NoteEditor.js) | Title + editor for one note. Auto-saves 1 second after you stop typing. |
+| [`src/lib/supabase/server.js`](src/lib/supabase/server.js) | Creates a Supabase client on the server that reads the session from the cookies. |
+| [`src/proxy.js`](src/proxy.js) | Runs before every request and refreshes the session when it has expired. |
+| [`src/lib/auth.js`](src/lib/auth.js) | `getCurrentUser()` returns the logged-in user, or `null`. |
+| [`src/app/signup/page.js`](src/app/signup/page.js), [`src/app/login/page.js`](src/app/login/page.js) | Forms with a Server Action that calls `signUp` or `signInWithPassword`. |
+| [`src/components/AuthStatus.js`](src/components/AuthStatus.js) | Shows your email and **Log out** in the header, or **Log in**. |
 
-`dynamic(..., { ssr: false })` is only allowed in Client Components, which is why the wrapper lives in its own `"use client"` file instead of in `page.js`.
+**Notes**
 
-## Auth and data
+| File | What it does |
+|---|---|
+| [`src/lib/actions.js`](src/lib/actions.js) | Server Actions: `signOut`, `createNote`, `updateNote` and `deleteNote`. |
+| [`src/app/page.js`](src/app/page.js) | **My notes**: checks the user, fetches the notes and shows the list. |
+| [`src/app/notes/[id]/page.js`](src/app/notes/[id]/page.js) | Fetches one note by the id in the URL and shows `NoteEditor`. |
+| [`src/components/NoteEditor.js`](src/components/NoteEditor.js) | Title, editor and the **Save** and **Delete** buttons. |
 
-- [`src/lib/supabase/`](src/lib/supabase/): Supabase clients for the browser, the server and the proxy (via `@supabase/ssr`).
-- [`src/proxy.js`](src/proxy.js): refreshes the session on every request and redirects signed-out users to `/login`.
-- [`src/app/login/`](src/app/login/): email + password login and sign-up with Server Actions.
-- [`src/app/notes/actions.js`](src/app/notes/actions.js): create, update and delete notes. The BlockNote document is stored as JSON in `notes.content`.
+**Editor** (the same as on `main`)
+
+| File | What it does |
+|---|---|
+| [`src/components/Editor.js`](src/components/Editor.js) | The BlockNote editor. Starts with the saved content and reports every change. |
+| [`src/components/DynamicEditor.js`](src/components/DynamicEditor.js) | Loads `Editor` only in the browser (`ssr: false`), because BlockNote can't run on the server. |
+
+### What happens when you click Save
+
+1. While you type, `Editor` calls `onChange` with `editor.document`, and `NoteEditor` keeps it in state as `content`.
+2. **Save** calls the Server Action `updateNote(id, title, content)`.
+3. `updateNote` runs on the server and updates the row in Supabase.
+4. RLS checks in the database that the note belongs to you.
+5. Next time the page loads, the server fetches the note, and `Editor` starts with the saved `content`.
+
+### Protecting pages
+
+Every page that needs a login starts the same way:
+
+```js
+const user = await getCurrentUser();
+
+if (!user) {
+  redirect("/login");
+}
+```
+
+The check runs on the server, before any HTML is sent. RLS is the second layer: even if a page forgot the check, the database would not return other users' notes.
 
 ## Scripts
 
