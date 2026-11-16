@@ -17,7 +17,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-No environment variables or backend are needed.
+No environment variables or backend are needed. For a version that saves notes to Supabase with login, see the [`supabase-notes`](https://github.com/cederdorff/nextjs-blocknote/tree/supabase-notes) branch.
 
 ## Testing
 
